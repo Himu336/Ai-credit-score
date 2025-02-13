@@ -39,7 +39,7 @@ def rate_decision(data):
 @app.route("/", methods=["GET"])
 def home():
     """Renders the home page"""
-    return render_template("index.html")
+    return jsonify({"message": "Credit scoring API is running!"}), 200
 
 @app.route("/predict_credit_score", methods=["POST"])
 def credit_score_api():
