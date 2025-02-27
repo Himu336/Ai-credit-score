@@ -76,20 +76,42 @@ def decision_rating_api():
     try:
         data = request.get_json()
         
-        # Required features for decision rating model
-        required_keys = [
-            "credit_score", "amount", "interest_rate", "tenure",
-            "income", "savings", "existing_loans", "employment_status", "expenses", "financial_goals"
-        ]
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
 
-        if not all(key in data for key in required_keys):
-            return jsonify({"error": f"Missing required input fields, expected: {required_keys}"}), 400
+        # Check if data is sent as feature_vector
+        if 'feature_vector' in data:
+            feature_vector = data['feature_vector']
+            if len(feature_vector) != 10:
+                return jsonify({
+                    "error": f"Feature vector must have 10 elements, got {len(feature_vector)}"
+                }), 400
+        else:
+            # Required features for decision rating model
+            required_keys = [
+                "credit_score", "amount", "interest_rate", "tenure",
+                "income", "savings", "existing_loans", "employment_status", 
+                "expenses", "financial_goals"
+            ]
 
-        # Prepare input features
-        feature_vector = [data[key] for key in required_keys]
+            if not all(key in data for key in required_keys):
+                return jsonify({
+                    "error": f"Missing required input fields, expected: {required_keys}"
+                }), 400
+
+            # Create feature vector in correct order
+            feature_vector = [float(data[key]) for key in required_keys]
+
+        # Convert to numpy array and reshape
+        features = np.array(feature_vector).reshape(1, -1)
         
-        rating = rate_decision(feature_vector)
-        return jsonify({"decision_rating": float(rating)})
+        # Get prediction
+        rating = rate_decision(features)
+        
+        return jsonify({
+            "success": True,
+            "decision_rating": float(rating)
+        })
     
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
